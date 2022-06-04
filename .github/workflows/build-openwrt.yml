@@ -28,18 +28,18 @@ on:
         required: false
         default: 'true'
         type: boolean
-      artifact:
-        description: '上传到artifact'
-        required: false
-        default: 'false'
-        type: boolean
-      cowtransfer:
+      upload_cowtransfer:
         description: '上传到cowtransfer'
         required: false
         default: 'false'
         type: boolean
-      wetransfer:
+      upload_wetransfer:
         description: '上传到wetransferr'
+        required: false
+        default: 'false'
+        type: boolean
+      upload_artifact:
+        description: '上传到artifact'
         required: false
         default: 'false'
         type: boolean
@@ -170,7 +170,7 @@ jobs:
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.cowtransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
@@ -179,12 +179,22 @@ jobs:
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.wetransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
+        
+    - name: Upload firmware to artifact
+      id: artifact
+      if: steps.organize.outputs.status == 'success' || github.event.inputs.upload_artifact == 'true' && !cancelled()
+      uses: actions/upload-artifact@v3
+      with:
+        name: collected_firmware
+        path: |
+          collected_firmware/
+          !collected_firmware/*.zip
         
     - name: Generate release tag
       id: tag
@@ -220,3 +230,4 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
