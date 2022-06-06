@@ -110,7 +110,7 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-        [ ${{ github.event.inputs.cpu_overclock }} == 'true' ] && mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo CPU超频配置文件已写入
+        [ ${{ github.event.inputs.cpu_overclock }} == true ] && mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo CPU超频配置文件已写入
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
