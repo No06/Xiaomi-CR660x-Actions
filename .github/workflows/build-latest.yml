@@ -18,11 +18,11 @@ on:
         description: 'SSH 连接至 Actions'
         required: false
         default: 'false'
-      cpu_overclock:
-        description: '超频到1100Mhz'
-        required: false
-        default: 'false'
-        type: boolean
+      # cpu_overclock:
+        # description: '超频到1100Mhz'
+        # required: false
+        # default: 'false'
+        # type: boolean
       release:
         description: '上传到release'
         required: false
