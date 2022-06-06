@@ -18,28 +18,28 @@ on:
         description: 'SSH 连接至 Actions'
         required: false
         default: 'false'
-      # cpu_overclock:
-        # description: '超频到1100Mhz'
-        # required: false
-        # default: 'false'
-        # type: boolean
+      cpu_overclock:
+        description: '超频到1100Mhz'
+        required: false
+        default: 'false'
+        type: boolean
       release:
         description: '上传到release'
         required: false
         default: 'true'
         type: boolean
-      upload_cowtransfer:
+      artifact:
+        description: '上传到artifact'
+        required: false
+        default: 'false'
+        type: boolean
+      cowtransfer:
         description: '上传到cowtransfer'
         required: false
         default: 'false'
         type: boolean
-      upload_wetransfer:
+      wetransfer:
         description: '上传到wetransferr'
-        required: false
-        default: 'false'
-        type: boolean
-      upload_artifact:
-        description: '上传到artifact'
         required: false
         default: 'false'
         type: boolean
@@ -112,7 +112,7 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-        mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo CPU超频配置文件已写入
+        [ ${{ github.event.inputs.cpu_overclock }} == true ] && mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -170,7 +170,7 @@ jobs:
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.cowtransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
@@ -179,22 +179,12 @@ jobs:
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.wetransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
-        
-    - name: Upload firmware to artifact
-      id: artifact
-      if: steps.organize.outputs.status == 'success' || github.event.inputs.upload_artifact == 'true' && !cancelled()
-      uses: actions/upload-artifact@v3
-      with:
-        name: collected_firmware
-        path: |
-          collected_firmware/
-          !collected_firmware/*.zip
         
     - name: Generate release tag
       id: tag
@@ -220,13 +210,13 @@ jobs:
       uses: GitRML/delete-workflow-runs@main
       with:
         retain_days: 1
-        keep_minimum_runs: 5
+        keep_minimum_runs: 10
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 15
+        keep_latest: 90
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
