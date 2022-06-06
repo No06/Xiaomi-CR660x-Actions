@@ -82,7 +82,6 @@ jobs:
         wget https://github.com/coolsnowwolf/lede/archive/refs/tags/20220505.tar.gz && tar -xf 20220505.tar.gz && mv lede-20220505/ openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         cd openwrt
-        git pull
         
     - name: Cache
       uses: klever1988/cachewrtbuild@main
