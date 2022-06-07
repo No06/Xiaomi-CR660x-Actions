@@ -114,7 +114,7 @@ jobs:
       run: |
         cd openwrt
         mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo 超频配置已导入
-        $OVERCLOCK_STATE=已超频
+        $OVERCLOCK_STATE: 已超频
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
