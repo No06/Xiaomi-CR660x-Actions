@@ -49,6 +49,7 @@ env:
   DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
+  OVERCLOCK_STATE: ''
   TZ: Asia/Shanghai
 
 jobs:
@@ -113,6 +114,7 @@ jobs:
       run: |
         cd openwrt
         mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo 超频配置已导入
+        $OVERCLOCK_STATE=已超频
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -190,7 +192,7 @@ jobs:
       id: tag
       if: steps.compile.outputs.status == 'success' && github.event.inputs.release == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "::set-output name=release_tag::$OVERCLOCK_STATE$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $github.event.inputs.wetransferr = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
