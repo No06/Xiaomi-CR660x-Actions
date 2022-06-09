@@ -38,16 +38,10 @@ on:
         required: false
         default: 'false'
         type: boolean
-      upload_artifact:
-        description: '上传到artifact'
-        required: false
-        default: 'false'
-        type: boolean
 
 env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
-  PATCH_FILE: overclock.patch
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: false
@@ -81,7 +75,6 @@ jobs:
         df -hT $PWD
         wget https://github.com/coolsnowwolf/lede/archive/refs/tags/20220505.tar.gz && tar -xf 20220505.tar.gz && mv lede-20220505/ openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-        cd openwrt
         
     - name: Cache
       uses: klever1988/cachewrtbuild@main
@@ -110,8 +103,14 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-        mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo CPU超频配置文件已写入
-        
+
+    - name: Import CPU overclock configuration
+      if: github.event.inputs.cpu_overclock == 'true'
+      run: |
+        cd openwrt
+        mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
+        $OVERCLOCK_STATE: 已超频
+
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -183,16 +182,6 @@ jobs:
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
-        
-    - name: Upload firmware to artifact
-      id: artifact
-      if: steps.organize.outputs.status == 'success' || github.event.inputs.upload_artifact == 'true' && !cancelled()
-      uses: actions/upload-artifact@v3
-      with:
-        name: collected_firmware
-        path: |
-          collected_firmware/
-          !collected_firmware/*.zip
         
     - name: Generate release tag
       id: tag
