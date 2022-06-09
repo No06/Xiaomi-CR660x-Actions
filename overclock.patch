@@ -65,7 +65,7 @@
  #define MT7621_GPIO_MODE_UART1		1
  #define MT7621_GPIO_MODE_I2C		2
  #define MT7621_GPIO_MODE_UART3_MASK	0x3
-@@ -113,49 +113,93 @@ static struct rt2880_pmx_group mt7621_pi
+@@ -111,49 +111,93 @@ static struct rt2880_pmx_group mt7621_pi
  	{ 0 }
  };
  
