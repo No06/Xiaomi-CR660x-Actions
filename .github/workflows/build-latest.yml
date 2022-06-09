@@ -113,7 +113,7 @@ jobs:
       if: github.event.inputs.cpu_overclock == 'true'
       run: |
         cd openwrt
-        mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch && echo 超频配置已导入
+        mv $GITHUB_WORKSPACE/$PATCH_FILE target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         $OVERCLOCK_STATE: 已超频
         
     - name: SSH connection to Actions
