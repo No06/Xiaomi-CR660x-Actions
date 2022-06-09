@@ -97,7 +97,7 @@
 +	if (IS_ERR(clk))
 +		panic("failed to allocate %s clock structure", id);
 +
-+	err = clk_register_clkdev(clk, id, NULL);
++	err = clk_register_clkdev(clk, id, NULL,i);
 +	if (err)
 +		panic("unable to register %s clock device", id);
  
