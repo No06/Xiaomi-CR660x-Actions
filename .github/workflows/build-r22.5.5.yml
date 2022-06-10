@@ -109,7 +109,7 @@ jobs:
       run: |
         cd openwrt
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        $OVERCLOCK_STATE: 已超频
+        echo "OVERCLOCK_STATE=已超频" >> $GITHUB_ENV
 
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -187,7 +187,7 @@ jobs:
       id: tag
       if: steps.compile.outputs.status == 'success' && github.event.inputs.release == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(R22.5.5 date +"%Y.%m.%d-%H%M")"
+        echo "::set-output name=release_tag::$OVERCLOCK_STATR22.5.5 $(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $github.event.inputs.wetransferr = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
