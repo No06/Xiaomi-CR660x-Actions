@@ -48,7 +48,6 @@ env:
   DIY_P2_SH: diy-part2.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
-  OVERCLOCK_STATE: ''
   TZ: Asia/Shanghai
 
 jobs:
@@ -113,7 +112,7 @@ jobs:
       run: |
         cd openwrt
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        $OVERCLOCK_STATE: 已超频
+        echo "OVERCLOCK_STATE=已超频" >> $GITHUB_ENV
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
