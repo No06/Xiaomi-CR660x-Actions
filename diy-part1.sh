@@ -21,5 +21,16 @@ rm -rf package/lean/luci-theme-argon
 
 git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/luci-theme-argon
 git clone -b 18.06 https://github.com/r1172464137/luci-theme-edge.git package/luci-theme-edge
-sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
-sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
+
+#sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
+#sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
+echo 'src-git small https://github.com/kenzok8/small-package.git' >> feeds.conf.default
+echo 'src-git packages https://github.com/coolsnowwolf/packages' >> feeds.conf.default
+echo 'src-git luci https://github.com/coolsnowwolf/luci' >> feeds.conf.default
+echo 'src-git routing https://github.com/coolsnowwolf/routing' >> feeds.conf.default
+echo 'src-git telephony https://git.openwrt.org/feed/telephony.git' >> feeds.conf.default
+echo 'src-git small8 https://github.com/kenzok8/small-package' >> feeds.conf.default
+#src-git video https://github.com/openwrt/video.git
+#src-git targets https://github.com/openwrt/targets.git
+#src-git oldpackages http://git.openwrt.org/packages.git
+#src-link custom /usr/src/openwrt/custom-feed
