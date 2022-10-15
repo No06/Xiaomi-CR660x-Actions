@@ -24,8 +24,4 @@ git clone -b 18.06 https://github.com/r1172464137/luci-theme-edge.git package/lu
 
 sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
 sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
-sed -i '$a src-git packages https://github.com/coolsnowwolf/packages' feeds.conf.default
-sed -i '$a src-git luci https://github.com/coolsnowwolf/luci' feeds.conf.default
-sed -i '$a src-git routing https://github.com/coolsnowwolf/routing' feeds.conf.default
-sed -i '$a src-git telephony https://git.openwrt.org/feed/telephony.git' feeds.conf.default
 sed -i '$a src-git small8 https://github.com/kenzok8/small-package' feeds.conf.default
