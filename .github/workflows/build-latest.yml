@@ -109,7 +109,6 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P2_SH
         
     - name: Import CPU overclock configuration
-      if: github.event.inputs.cpu_overclock == 'true'
       run: |
         cd openwrt
         sed -i s/362/$(printf %x $(((${{ input.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
