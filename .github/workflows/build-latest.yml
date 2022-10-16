@@ -109,12 +109,12 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P2_SH
         
     - name: Import CPU overclock configuration
-      if: ${{ input.cpu_overclock }} != 880
+      if: ${{ inputs.cpu_overclock }} != 880
       run: |
         cd openwrt
-        sed -i s/362/$(printf %x $(((${{ input.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
+        sed -i s/362/$(printf %x $(((${{ inputs.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        echo "OVERCLOCK_STATE=已超频 ${{ input.cpu_overclock }}Mhz" >> $GITHUB_ENV
+        echo "OVERCLOCK_STATE=已超频 ${{ inputs.cpu_overclock }}Mhz" >> $GITHUB_ENV
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
