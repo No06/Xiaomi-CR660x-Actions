@@ -49,6 +49,7 @@ env:
   OVERCLOCK_SH: overclock.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
+  UPLOAD_RELEASE: false
   TZ: Asia/Shanghai
 
 jobs:
@@ -242,8 +243,8 @@ jobs:
     - name: Upload firmware to release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
-      # env:
-        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      env:
+        UPLOAD_RELEASE: true
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
@@ -253,14 +254,15 @@ jobs:
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
-        retain_days: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+        retain_days: 90
         keep_minimum_runs: 5
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       with:
-        keep_latest: 10
+        keep_latest: 5
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
