@@ -49,7 +49,6 @@ env:
   OVERCLOCK_SH: overclock.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
-  UPLOAD_RELEASE: false
   TZ: Asia/Shanghai
 
 jobs:
@@ -241,10 +240,9 @@ jobs:
         echo "::set-output name=status::success"
         
     - name: Upload firmware to release
+      id: release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        UPLOAD_RELEASE: true
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
@@ -260,7 +258,7 @@ jobs:
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.release.outputs.status == 'success' && !cancelled()
       with:
         keep_latest: 5
         delete_tags: true
