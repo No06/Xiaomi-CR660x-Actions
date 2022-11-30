@@ -156,7 +156,7 @@ jobs:
         cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
         cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
         cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
-        echo "hwnat=(HWNAT 测试版)" >> $GITHUB_ENV
+        echo "hwnat=(HWNAT测试版)" >> $GITHUB_ENV
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
