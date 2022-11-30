@@ -134,7 +134,7 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        wget -O .config ${{ inputs.cpu_overclock }}
+        wget -O .config ${{ inputs.config_url }}
         mv .config openwrt
         chmod +x $DIY_P2_SH
         cd openwrt
