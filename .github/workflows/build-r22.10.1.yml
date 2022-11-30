@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: Build R22.5.5 LEDE
+name: Build R22.10.1 LEDE
 
 on:
   repository_dispatch:
@@ -18,8 +18,17 @@ on:
         description: 'SSH 连接至 Actions'
         required: false
         default: 'false'
+      config_url:
+        description: '.config_URL'
+        required: true
+        default: 'https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config'
       cpu_overclock:
-        description: '超频到1100Mhz'
+        description: '超频至1100Mhz (默认880Mhz)'
+        required: false
+        default: '1100'
+        type: number
+      hwnat_feature:
+        description: '全新 hwnat 驱动测试'
         required: false
         default: 'false'
         type: boolean
@@ -40,47 +49,73 @@ on:
         type: boolean
 
 env:
+  REPO_URL: https://github.com/coolsnowwolf/lede/archive/refs/tags/20221001.zip
+#  REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: .config
+#   CONFIG_FILE: .config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
+  OVERCLOCK_SH: overclock.sh
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
   TZ: Asia/Shanghai
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout
       uses: actions/checkout@main
-
+      
+    - name: Check server performance
+      run: |
+        echo "警告⚠"
+        echo "若分配的服务器性能不足，务必及时取消，重新运行！"
+        echo "已知编译成功CPU型号：8370C,8171M"
+        echo "已知性能不足CPU型号：8272CL"
+        echo -e "-------------- ------------CPU信息------------------------------------------\n"
+        echo "CPU物理数量:$(cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l)"
+        echo -e "CPU核心及版本信息：$(cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c) \n"
+        echo "-------------------------------内存信息-------------------------------------------"
+        echo "已安装内存详细信息："
+        sudo lshw -short -C memory | grep GiB
+        echo -e "\n"
+        echo "-----------------------------硬盘信息---------------------------------------------"
+        echo -e  "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l) \n"
+        echo "硬盘详情："
+        df -Th  
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* adoptopenjdk* mysql* php* mongodb* dotnet* moby* snapd* || true
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install $(curl -fsSL git.io/depends-ubuntu-2004)
+        sudo -E apt-get -qq install $(curl -fsSL https://is.gd/depends_ubuntu_2204)
+        sudo -E apt-get -qq install libfuse-dev
+        sudo -E apt-get -qq install rename
+        sudo -E apt-get -qq install time
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+        df -Th
         
-    - name: Download source code
+    - name: Clone source code
       working-directory: /workdir
       run: |
         df -hT $PWD
-        wget https://github.com/coolsnowwolf/lede/archive/refs/tags/20220505.tar.gz && tar -xf 20220505.tar.gz && mv lede-20220505/ openwrt
+        wget $REPO_URL
+        unzip 20221001.zip
+        mv lede-20221001 openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         
     - name: Cache
       uses: klever1988/cachewrtbuild@main
       with:
-        ccache: 'false'
-        toolchain: 'false'
+        ccache: 'true'
         prefix: ${{ github.workspace }}/openwrt
         
     - name: Load custom feeds
@@ -99,18 +134,28 @@ jobs:
     - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        wget -O .config ${{ inputs.cpu_overclock }}
+        mv .config openwrt
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-
+        
     - name: Import CPU overclock configuration
-      if: github.event.inputs.cpu_overclock == 'true'
+      if: ${{ inputs.cpu_overclock }} != 880 && !cancelled()
       run: |
         cd openwrt
+        sed -i s/362/$(printf %x $(((${{ inputs.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        echo "OVERCLOCK_STATE=已超频" >> $GITHUB_ENV
-
+        echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock }}Mhz" >> $GITHUB_ENV
+    
+    - name: Import hwnat configuration
+      if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
+      run: |
+        git clone -b ramips --single-branch https://github.com/AmadeusGhost/lede lede-hwnat
+        cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
+        cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
+        cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
+        
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -158,6 +203,24 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
         
+    - name: Check performance again
+      run: |
+        echo "警告⚠"
+        echo "若分配的服务器性能不足，务必及时取消，重新运行！"
+        echo "已知编译成功CPU型号：8370C,8171M"
+        echo "已知性能不足CPU型号：8272CL"
+        echo -e "-------------- ------------CPU信息------------------------------------------\n"
+        echo "CPU物理数量:$(cat /proc/cpuinfo| grep "physical id"| sort| uniq| wc -l)"
+        echo -e "CPU核心及版本信息：$(cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c) \n"
+        echo "-------------------------------内存信息-------------------------------------------"
+        echo "已安装内存详细信息："
+        sudo lshw -short -C memory | grep GiB
+        echo -e "\n"
+        echo "-----------------------------硬盘信息---------------------------------------------"
+        echo -e  "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l) \n"
+        echo "硬盘详情："
+        df -Th
+        
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
@@ -187,18 +250,18 @@ jobs:
       id: tag
       if: steps.compile.outputs.status == 'success' && github.event.inputs.release == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$OVERCLOCK_STATR22.5.5 $(date +"%Y.%m.%d-%H%M")"
+        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")$OVERCLOCK_STATE"
         touch release.txt
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $github.event.inputs.wetransferr = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
         echo "::set-output name=status::success"
         
     - name: Upload firmware to release
+      id: release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
+        token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
@@ -206,14 +269,16 @@ jobs:
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
-        retain_days: 1
+        token: ${{ secrets.GITHUB_TOKEN }}
+        retain_days: 90
         keep_minimum_runs: 5
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.release.outputs.status == 'success' && !cancelled()
       with:
-        keep_latest: 15
+        keep_latest: 5
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
