@@ -274,11 +274,10 @@ jobs:
         keep_minimum_runs: 5
 
     - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
+      uses: dev-drprasad/delete-older-releases@v0.2.0
       if: steps.release.outputs.status == 'success' && !cancelled()
       with:
-        keep_latest: 5
-        delete_tags: true
+        keep_latest: 20
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
