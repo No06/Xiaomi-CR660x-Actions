@@ -18,11 +18,21 @@ on:
         description: 'SSH 连接至 Actions'
         required: false
         default: 'false'
+        type: boolean
+      config_url:
+        description: '.config_URL'
+        required: true
+        default: 'https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config'
       cpu_overclock:
         description: '超频至1100Mhz (默认880Mhz)'
         required: false
         default: '1100'
         type: number
+      hwnat_feature:
+        description: '全新 hwnat 驱动测试'
+        required: false
+        default: 'false'
+        type: boolean
       release:
         description: '上传到release'
         required: false
@@ -139,6 +149,14 @@ jobs:
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock }}Mhz" >> $GITHUB_ENV
         
+    - name: Import hwnat configuration
+      if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
+      run: |
+        git clone -b ramips --single-branch https://github.com/AmadeusGhost/lede lede-hwnat
+        cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
+        cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
+        cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
+        
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
@@ -253,14 +271,15 @@ jobs:
       uses: GitRML/delete-workflow-runs@main
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        repository: ${{ github.repository }}
         retain_days: 90
-        keep_minimum_runs: 5
+        keep_minimum_runs: 20
 
     - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@v0.1.0
+      uses: dev-drprasad/delete-older-releases@v0.2.0
       if: steps.release.outputs.status == 'success' && !cancelled()
       with:
-        keep_latest: 5
+        keep_latest: 20
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
