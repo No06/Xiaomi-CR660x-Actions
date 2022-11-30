@@ -155,6 +155,7 @@ jobs:
         cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
         cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
         cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
+        echo "hwnat=(HWNAT 测试版)" >> $GITHUB_ENV
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -251,7 +252,7 @@ jobs:
       id: tag
       if: steps.compile.outputs.status == 'success' && github.event.inputs.release == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::R22.10.1-$(date +"%Y.%m.%d-%H%M")$OVERCLOCK_STATE"
+        echo "::set-output name=release_tag::R22.10.1-$(date +"%Y.%m.%d-%H%M")$OVERCLOCK_STATE$hwnat"
         touch release.txt
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $github.event.inputs.wetransferr = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
