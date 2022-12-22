@@ -27,7 +27,7 @@ on:
         default: 'https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config'
       cpu_overclock:
         description: '超频至1100Mhz (默认880Mhz)'
-        required: false
+        required: true
         default: '1100'
         type: number
       hwnat_feature:
