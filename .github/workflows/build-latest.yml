@@ -11,8 +11,8 @@
 name: Build Latest LEDE
 
 on:
-  schedule:
-    - cron: 0 0 */3 * *
+#   schedule:
+#     - cron: 0 0 */3 * *
   repository_dispatch:
   workflow_dispatch:
     inputs:
