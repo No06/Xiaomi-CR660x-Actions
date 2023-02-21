@@ -140,12 +140,13 @@ jobs:
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        [ $github.event.inputs.config_url != $DEFAULT_CONFIG ] && rm openwrt/.config && wget ${{ inputs.config_url }} -O openwrt/.config
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
         
     - name: Import CPU overclock configuration
-      if: ${{ inputs.cpu_overclock }} != 880 && !cancelled()
+      if: github.event.inputs.cpu_overclock != 880 && !cancelled()
       run: |
         cd openwrt
         sed -i s/362/$(printf %x $(((${{ inputs.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
@@ -241,7 +242,7 @@ jobs:
         touch release.txt
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $github.event.inputs.wetransferr = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
-        [ ${{ inputs.config_url }} != $DEFAULT_CONFIG ] && echo "🔗 [.config URL](${{ inputs.config_url }})" >> release.txt
+        [ $github.event.inputs.config_url != $DEFAULT_CONFIG ] && echo "🔗 [.config URL](${{ inputs.config_url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
         
     - name: Upload firmware to release
