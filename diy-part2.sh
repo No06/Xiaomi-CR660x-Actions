@@ -19,4 +19,4 @@ sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/M
 #sed -i 's/luci-theme-bootstrap/luci-theme-edge/g' feeds/luci/collections/luci/Makefile
 
 # 修复ssr-plus编译错误
-sed -i 's/luci-lib-ipkg/luci-base/g' package/feeds/kenzo/luci-app-ssr-plus/Makefile
+# sed -i 's/luci-lib-ipkg/luci-base/g' package/feeds/kenzo/luci-app-ssr-plus/Makefile
