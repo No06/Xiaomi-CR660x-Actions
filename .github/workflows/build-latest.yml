@@ -11,8 +11,8 @@
 name: Build Latest LEDE
 
 on:
-#   schedule:
-#     - cron: 0 0 */3 * *
+  schedule:
+    - cron: '0 16 */6 * *'
   repository_dispatch:
   workflow_dispatch:
     inputs:
@@ -155,14 +155,14 @@ jobs:
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock }}Mhz" >> $GITHUB_ENV
         
-    - name: Import hwnat configuration
-      if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
-      run: |
-        git clone -b ramips --single-branch https://github.com/AmadeusGhost/lede lede-hwnat
-        cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
-        cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
-        cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
-        echo "hwnat=(HWNAT测试版)" >> $GITHUB_ENV
+    # - name: Import hwnat configuration
+    #   if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
+    #   run: |
+    #     git clone -b ramips --single-branch https://github.com/AmadeusGhost/lede lede-hwnat
+    #     cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
+    #     cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
+    #     cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
+    #     echo "hwnat=(HWNAT测试版)" >> $GITHUB_ENV
         
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@v1.0.0
