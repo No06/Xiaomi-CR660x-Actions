@@ -26,9 +26,9 @@ on:
         required: true
         default: 'https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config'
       cpu_overclock:
-        description: '超频至1100Mhz (默认880Mhz)'
+        description: '超频至1050Mhz (默认880Mhz)'
         required: true
-        default: '1100'
+        default: '1050'
         type: number
       hwnat_feature:
         description: '全新 hwnat 驱动测试'
@@ -57,6 +57,7 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DEFAULT_CONFIG: https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config
+  DEFAULT_CPU_CLOCK: 1050
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   OVERCLOCK_SH: overclock.sh
@@ -142,7 +143,7 @@ jobs:
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        [ $github.event.inputs.config_url != $DEFAULT_CONFIG ] && rm openwrt/.config && wget ${{ inputs.config_url }} -O openwrt/.config
+        [ $github.event.inputs.config_url != $DEFAULT_CONFIG && $github.event.inputs.config_url != ""] && rm openwrt/.config && wget ${{ inputs.config_url }} -O openwrt/.config
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
@@ -151,9 +152,9 @@ jobs:
       if: github.event.inputs.cpu_overclock != 880 && !cancelled()
       run: |
         cd openwrt
-        sed -i s/362/$(printf %x $(((${{ inputs.cpu_overclock }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
+        sed -i s/362/$(printf %x $(((${{ inputs.cpu_overclock || $DEFAULT_CPU_CLOCK }}/20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock }}Mhz" >> $GITHUB_ENV
+        echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock || $DEFAULT_CPU_CLOCK }}Mhz" >> $GITHUB_ENV
         
     # - name: Import hwnat configuration
     #   if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
@@ -220,7 +221,7 @@ jobs:
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && github.event.inputs.upload_cowtransfer != "" && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
@@ -229,7 +230,7 @@ jobs:
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && github.event.inputs.upload_wetransfer != "" && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
@@ -238,7 +239,7 @@ jobs:
         
     - name: Generate release tag
       id: tag
-      if: steps.compile.outputs.status == 'success' && github.event.inputs.release == 'true' && !cancelled()
+      if: steps.compile.outputs.status == 'success' && [ github.event.inputs.release == 'true' || github.event.inputs.release == null ] && !cancelled()
       run: |
         echo "release_tag=Latest$(date +"%Y.%m.%d-%H%M")$OVERCLOCK_STATE$hwnat" >> $GITHUB_OUTPUT
         touch release.txt
