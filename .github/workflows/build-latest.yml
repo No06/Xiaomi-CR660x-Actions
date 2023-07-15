@@ -30,11 +30,11 @@ on:
         required: true
         default: '1050'
         type: number
-      hwnat_feature:
-        description: '全新 hwnat 驱动测试'
-        required: false
-        default: 'false'
-        type: boolean
+      # hwnat_feature:
+      #   description: '全新 hwnat 驱动测试'
+      #   required: false
+      #   default: 'false'
+      #   type: boolean
       release:
         description: '上传到release'
         required: false
