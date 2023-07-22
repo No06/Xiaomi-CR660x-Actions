@@ -12,7 +12,7 @@ name: Build Latest LEDE
 
 on:
   schedule:
-    - cron: '0 16 */6 * *'
+    - cron: '0 16 * * *'
   repository_dispatch:
   workflow_dispatch:
     inputs:
