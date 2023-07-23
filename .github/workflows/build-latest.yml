@@ -221,7 +221,7 @@ jobs:
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && github.event.inputs.upload_cowtransfer != "" && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
@@ -230,7 +230,7 @@ jobs:
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && github.event.inputs.upload_wetransfer != "" && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
