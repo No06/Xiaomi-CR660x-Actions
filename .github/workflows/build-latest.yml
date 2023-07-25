@@ -152,7 +152,7 @@ jobs:
       if: github.event.inputs.cpu_overclock != 880 && !cancelled()
       run: |
         cd openwrt
-        sed -i s/362/$(printf %x $((( (${{ inputs.cpu_overclock }} || $DEFAULT_CPU_CLOCK) /20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
+        sed -i s/362/$(printf %x $((( ${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }} /20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         echo "OVERCLOCK_STATE=已超频(${{ inputs.cpu_overclock }} || $DEFAULT_CPU_CLOCK)Mhz" >> $GITHUB_ENV
         
@@ -198,14 +198,14 @@ jobs:
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true' && !cancelled()
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
     - name: Organize files
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
@@ -259,7 +259,9 @@ jobs:
         files: ${{ env.FIRMWARE }}/*
 
     - name: Delete workflow runs
+      id: delete_workflow
       uses: Mattraks/delete-workflow-runs@v2
+      if: steps.release.outputs.status == 'success' && !cancelled()
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
