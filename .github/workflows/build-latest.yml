@@ -67,7 +67,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout
@@ -97,6 +97,7 @@ jobs:
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /etc/mysql /etc/php /usr/local/lib/android /opt/ghc
         sudo apt update -y
+        sudo apt full-upgrade -y
         sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
           bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
           git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
