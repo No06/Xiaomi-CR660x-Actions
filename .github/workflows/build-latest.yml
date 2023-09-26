@@ -26,9 +26,9 @@ on:
         required: true
         default: 'https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config'
       cpu_overclock:
-        description: '超频至1050Mhz (默认880Mhz)'
+        description: '超频 (默认880Mhz)'
         required: true
-        default: '1050'
+        default: '1100'
         type: number
       # hwnat_feature:
       #   description: '全新 hwnat 驱动测试'
