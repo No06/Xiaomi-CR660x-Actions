@@ -192,6 +192,7 @@ jobs:
 
     - name: Load Temp Patch
       run: |
+        cd openwrt
         mv $GITHUB_WORKSPACE/Makefile package/kernel/mt76/Makefile
         
     - name: Compile the firmware
