@@ -156,10 +156,7 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-
-    - name: Load Temp Patch
-      run: |
-        mv $GITHUB_WORKSPACE/Makefile package/kernel/mt76/Makefile
+        
     - name: Import CPU overclock configuration
       if: github.event.inputs.cpu_overclock != '880' && !cancelled()
       run: |
@@ -192,6 +189,10 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
+
+    - name: Load Temp Patch
+      run: |
+        mv $GITHUB_WORKSPACE/Makefile package/kernel/mt76/Makefile
         
     - name: Compile the firmware
       id: compile
