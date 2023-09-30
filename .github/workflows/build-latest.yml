@@ -189,11 +189,6 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-
-    - name: Load Temp Patch
-      run: |
-        cd openwrt
-        mv $GITHUB_WORKSPACE/Makefile package/kernel/mt76/Makefile
         
     - name: Compile the firmware
       id: compile
