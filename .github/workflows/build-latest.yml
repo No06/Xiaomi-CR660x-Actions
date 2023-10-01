@@ -79,7 +79,6 @@ jobs:
       
     - name: Check server performance
       run: |
-        cat release.txt
         echo "警告⚠"
         echo "若分配的服务器性能不足，务必及时取消，重新运行！"
         echo "已知编译成功CPU型号：8370C,8171M"
