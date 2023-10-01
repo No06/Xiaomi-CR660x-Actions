@@ -57,7 +57,7 @@ env:
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
   DEFAULT_CONFIG: https://raw.githubusercontent.com/No06/Xiaomi-CR660x-Actions/main/.config
-  DEFAULT_CPU_CLOCK: 1050
+  DEFAULT_CPU_CLOCK: 1100
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
   OVERCLOCK_SH: overclock.sh
@@ -161,8 +161,8 @@ jobs:
       if: github.event.inputs.cpu_overclock != '880' && !cancelled()
       run: |
         cd openwrt
-        sed -i s/362/$(printf %x $((( ${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }} /20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock_5_10.patch
-        mv $GITHUB_WORKSPACE/overclock_5_10.patch target/linux/ramips/patches-5.10/322-mt7621-fix-cpu-clk-add-clkdev.patch
+        sed -i s/362/$(printf %x $((( ${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }} /20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
+        mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
         echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }}Mhz" >> $GITHUB_ENV
         
     # - name: Import hwnat configuration
