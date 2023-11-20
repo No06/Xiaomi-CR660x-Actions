@@ -16,11 +16,11 @@ on:
   repository_dispatch:
   workflow_dispatch:
     inputs:
-      ssh:
-        description: 'SSH 连接至 Actions'
-        required: false
-        default: 'false'
-        type: boolean
+      # ssh:
+      #   description: 'SSH 连接至 Actions'
+      #   required: false
+      #   default: false
+      #   type: boolean
       config_url:
         description: '.config_URL'
         required: true
@@ -30,25 +30,20 @@ on:
         required: true
         default: '1100'
         type: number
-      # hwnat_feature:
-      #   description: '全新 hwnat 驱动测试'
-      #   required: false
-      #   default: 'false'
-      #   type: boolean
       release:
         description: '上传到release'
         required: false
-        default: 'true'
+        default: true
         type: boolean
       upload_cowtransfer:
         description: '上传到cowtransfer'
         required: false
-        default: 'false'
+        default: false
         type: boolean
       upload_wetransfer:
         description: '上传到wetransferr'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 env:
@@ -160,30 +155,34 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
+
+    - name: Fix golang packages compile fault
+      env:
+        SCRIPT_NAME: fix_golang_package.sh
+      run: |
+        chmod +x $SCRIPT_NAME
+        cd openwrt
+        $GITHUB_WORKSPACE/$SCRIPT_NAME
         
     - name: Import CPU overclock configuration
       if: github.event.inputs.cpu_overclock != '880' && !cancelled()
       run: |
+        CPU_CLOCK=${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }}
+        CPU_CLOCK_HEX=$(printf %x $((( ${CPU_CLOCK} /20-1)*16+2)))
+
         cd openwrt
-        sed -i s/362/$(printf %x $((( ${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }} /20-1)*16+2)))/g $GITHUB_WORKSPACE/overclock.patch
+        sed -i s/362/${CPU_CLOCK_HEX}/g $GITHUB_WORKSPACE/overclock.patch
         mv $GITHUB_WORKSPACE/overclock.patch target/linux/ramips/patches-5.4/102-mt7621-fix-cpu-clk-add-clkdev.patch
-        echo "OVERCLOCK_STATE=已超频${{ inputs.cpu_overclock || env.DEFAULT_CPU_CLOCK }}Mhz" >> $GITHUB_ENV
+        sed -i s/362/${CPU_CLOCK_HEX}/g $GITHUB_WORKSPACE/overclock_5_10.patch
+        mv $GITHUB_WORKSPACE/overclock_5_10.patch target/linux/ramips/patches-5.10/322-mt7621-fix-cpu-clk-add-clkdev.patch
+        echo "OVERCLOCK_STATE=已超频${CPU_CLOCK}Mhz" >> $GITHUB_ENV
         
-    # - name: Import hwnat configuration
-    #   if: github.event.inputs.hwnat_feature == 'true' && !cancelled()
-    #   run: |
-    #     git clone -b ramips --single-branch https://github.com/AmadeusGhost/lede lede-hwnat
-    #     cp lede-hwnat/target/linux/ramips/dts/mt7621* openwrt/target/linux/ramips/dts
-    #     cp lede-hwnat/target/linux/ramips/files/drivers/net/ethernet/mtk/mtk_eth_soc.c openwrt/target/linux/ramips/files/drivers/net/ethernet/mtk/
-    #     cp lede-hwnat/target/linux/ramips/mt7621/base-files/etc/board.d/02_network openwrt/target/linux/ramips/mt7621/base-files/etc/board.d/
-    #     echo "hwnat=(HWNAT测试版)" >> $GITHUB_ENV
-        
-    - name: SSH connection to Actions
-      uses: P3TERX/ssh2actions@v1.0.0
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    # - name: SSH connection to Actions
+    #   uses: P3TERX/ssh2actions@v1.0.0
+    #   if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+    #   env:
+    #     TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    #     TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
     - name: Download package
       id: package
@@ -206,7 +205,6 @@ jobs:
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         
     - name: Check space usage
-      if: (!cancelled())
       run: df -hT
 
     - name: Upload bin directory
@@ -234,7 +232,7 @@ jobs:
 
     - name: Upload firmware to cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_cowtransfer == true && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
@@ -243,7 +241,7 @@ jobs:
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && github.event.inputs.upload_wetransfer == true && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
@@ -252,7 +250,7 @@ jobs:
         
     - name: Generate release tag
       id: tag
-      if: steps.compile.outputs.status == 'success' && ( github.event.inputs.release == 'true' || github.event.inputs.release == null ) && !cancelled()
+      if: steps.compile.outputs.status == 'success' && ( github.event.inputs.release == true || github.event.inputs.release == null ) && !cancelled()
       run: |
         echo "release_tag=Latest$(date +"%Y.%m.%d-%H%M")$OVERCLOCK_STATE$hwnat" >> $GITHUB_OUTPUT
         [ $github.event.inputs.cowtransfer = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
@@ -263,7 +261,7 @@ jobs:
     - name: Upload firmware to release
       id: release
       uses: softprops/action-gh-release@v1
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      if: steps.tag.outputs.status == 'success' && ( github.event.inputs.release == true || github.event.inputs.release == null ) && !cancelled()
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
@@ -273,7 +271,6 @@ jobs:
     - name: Delete workflow runs
       id: delete_workflow
       uses: Mattraks/delete-workflow-runs@v2
-      if: steps.release.outputs.status == 'success' && !cancelled()
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         repository: ${{ github.repository }}
