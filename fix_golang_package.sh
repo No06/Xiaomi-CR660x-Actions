@@ -6,14 +6,14 @@ files=(feeds/packages/net/adguardhome/Makefile feeds/packages/net/frp/Makefile)
 
 for file in ${files[@]}
 do
-    tempfile=$(mktemp)
+    n=1
 
-    while read -r line; do
-        echo "$line" >> $tempfile
+    while read -r line
+    do
         if [[ ! $line =~ ^# ]]; then
-            echo "PKG_USE_MIPS16:=0" >> $tempfile
+            sed -i "$n aPKG_USE_MIPS16:=0" $file
+            break
         fi
+        n=$(($n+1))
     done < "$file"
-
-    mv $tempfile $file
 done
