@@ -155,14 +155,6 @@ jobs:
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
-
-    - name: Fix golang packages compile fault
-      env:
-        SCRIPT_NAME: fix_golang_package.sh
-      run: |
-        chmod +x $SCRIPT_NAME
-        cd openwrt
-        $GITHUB_WORKSPACE/$SCRIPT_NAME
         
     - name: Import CPU overclock configuration
       if: github.event.inputs.cpu_overclock != '880' && !cancelled()
